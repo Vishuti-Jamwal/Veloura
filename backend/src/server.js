@@ -4,6 +4,8 @@ import cors from "cors";
 import mongoose from "mongoose";
 import voterAuthRoutes from "./routes/authRoutes.js";
 
+
+
 dotenv.config();
 
 mongoose
