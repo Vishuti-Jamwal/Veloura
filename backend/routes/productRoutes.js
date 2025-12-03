@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const Product = require('../models/Product');
+const prisma = require('../config/prisma');
 const { protect, admin } = require('../middleware/authMiddleware');
 
 // @desc    Get all products with search, filter, sort, pagination
@@ -10,26 +10,26 @@ router.get('/', async (req, res, next) => {
     try {
         const { search, category, sort, page = 1, limit = 10 } = req.query;
 
-        let query = {};
+        let where = {};
 
         // Search by name
         if (search) {
-            query.name = { $regex: search, $options: 'i' };
+            where.name = { contains: search, mode: 'insensitive' };
         }
 
         // Filter by category
         if (category && category !== 'All') {
-            query.category = category;
+            where.category = category;
         }
 
         // Sorting
-        let sortOption = {};
+        let orderBy = {};
         if (sort === 'price_asc') {
-            sortOption.price = 1;
+            orderBy.price = 'asc';
         } else if (sort === 'price_desc') {
-            sortOption.price = -1;
+            orderBy.price = 'desc';
         } else {
-            sortOption.createdAt = -1; // Default new to old
+            orderBy.createdAt = 'desc'; // Default new to old
         }
 
         // Pagination
@@ -37,12 +37,14 @@ router.get('/', async (req, res, next) => {
         const limitNum = Number(limit);
         const skip = (pageNum - 1) * limitNum;
 
-        const products = await Product.find(query)
-            .sort(sortOption)
-            .limit(limitNum)
-            .skip(skip);
+        const products = await prisma.product.findMany({
+            where,
+            orderBy,
+            take: limitNum,
+            skip,
+        });
 
-        const total = await Product.countDocuments(query);
+        const total = await prisma.product.count({ where });
 
         res.json({
             products,
@@ -60,7 +62,9 @@ router.get('/', async (req, res, next) => {
 // @access  Public
 router.get('/:id', async (req, res, next) => {
     try {
-        const product = await Product.findById(req.params.id);
+        const product = await prisma.product.findUnique({
+            where: { id: req.params.id },
+        });
         if (product) {
             res.json(product);
         } else {
@@ -79,15 +83,15 @@ router.post('/', protect, admin, async (req, res, next) => {
     try {
         const { name, description, price, category, imageUrl } = req.body;
 
-        const product = new Product({
-            name,
-            description,
-            price,
-            category,
-            imageUrl,
+        const createdProduct = await prisma.product.create({
+            data: {
+                name,
+                description,
+                price: Number(price),
+                category,
+                imageUrl,
+            },
         });
-
-        const createdProduct = await product.save();
         res.status(201).json(createdProduct);
     } catch (error) {
         next(error);
@@ -101,16 +105,21 @@ router.put('/:id', protect, admin, async (req, res, next) => {
     try {
         const { name, description, price, category, imageUrl } = req.body;
 
-        const product = await Product.findById(req.params.id);
+        const product = await prisma.product.findUnique({
+            where: { id: req.params.id },
+        });
 
         if (product) {
-            product.name = name || product.name;
-            product.description = description || product.description;
-            product.price = price || product.price;
-            product.category = category || product.category;
-            product.imageUrl = imageUrl || product.imageUrl;
-
-            const updatedProduct = await product.save();
+            const updatedProduct = await prisma.product.update({
+                where: { id: req.params.id },
+                data: {
+                    name: name || product.name,
+                    description: description || product.description,
+                    price: price ? Number(price) : product.price,
+                    category: category || product.category,
+                    imageUrl: imageUrl || product.imageUrl,
+                },
+            });
             res.json(updatedProduct);
         } else {
             res.status(404);
@@ -126,10 +135,14 @@ router.put('/:id', protect, admin, async (req, res, next) => {
 // @access  Private/Admin
 router.delete('/:id', protect, admin, async (req, res, next) => {
     try {
-        const product = await Product.findById(req.params.id);
+        const product = await prisma.product.findUnique({
+            where: { id: req.params.id },
+        });
 
         if (product) {
-            await product.deleteOne();
+            await prisma.product.delete({
+                where: { id: req.params.id },
+            });
             res.json({ message: 'Product removed' });
         } else {
             res.status(404);
