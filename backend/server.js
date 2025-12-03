@@ -17,6 +17,11 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 // Routes
+app.get("/", (req, res) => {
+  res.json({
+    message: "Veloura Backend API is running successfully 🚀"
+  });
+});
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/products', require('./routes/productRoutes'));
 
