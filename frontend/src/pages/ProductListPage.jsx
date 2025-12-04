@@ -25,10 +25,11 @@ const ProductListPage = () => {
                         page,
                     },
                 });
-                setProducts(data.products);
-                setPages(data.pages);
+                setProducts(data.products || []);
+                setPages(data.pages || 1);
             } catch (error) {
                 console.error('Error fetching products:', error);
+                setProducts([]);
             }
             setLoading(false);
         };
