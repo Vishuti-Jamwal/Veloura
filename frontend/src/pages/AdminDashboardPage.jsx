@@ -33,14 +33,19 @@ const AdminDashboardPage = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
+            const payload = {
+                ...formData,
+                price: Number(formData.price), // Ensure price is a number
+            };
+
             if (editingId) {
-                await API.put(`/products/${editingId}`, formData);
+                await API.put(`/products/${editingId}`, payload);
             } else {
-                await API.post('/products', formData);
+                await API.post('/products', payload);
             }
             setFormData({ name: '', description: '', price: '', category: '', imageUrl: '' });
             setEditingId(null);
-            fetchProducts();
+            fetchProducts(); // Refresh list
         } catch (error) {
             console.error(error);
             alert('Error saving product');
@@ -55,7 +60,7 @@ const AdminDashboardPage = () => {
             category: product.category,
             imageUrl: product.imageUrl,
         });
-        setEditingId(product._id);
+        setEditingId(product._id || product.id); // Handle both _id and id if necessary
         window.scrollTo(0, 0);
     };
 
@@ -63,9 +68,10 @@ const AdminDashboardPage = () => {
         if (window.confirm('Are you sure?')) {
             try {
                 await API.delete(`/products/${id}`);
-                fetchProducts();
+                fetchProducts(); // Refresh list
             } catch (error) {
                 console.error(error);
+                alert('Error deleting product');
             }
         }
     };

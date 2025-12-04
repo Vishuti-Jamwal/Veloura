@@ -19,7 +19,7 @@ const AdminRoute = ({ children }) => {
     return children;
   }
 
-  return <Navigate to="/" />;
+  return <Navigate to="/login" />;
 };
 
 function App() {

@@ -8,9 +8,14 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const storedUser = JSON.parse(localStorage.getItem('user'));
+        const storedUser = localStorage.getItem('user');
         if (storedUser) {
-            setUser(storedUser);
+            try {
+                setUser(JSON.parse(storedUser));
+            } catch (error) {
+                console.error("Failed to parse user from localStorage", error);
+                localStorage.removeItem('user');
+            }
         }
         setLoading(false);
     }, []);
@@ -30,6 +35,7 @@ export const AuthProvider = ({ children }) => {
     const logout = () => {
         localStorage.removeItem('user');
         setUser(null);
+        // Optional: Redirect to login or home if needed, but usually handled by component
     };
 
     return (
