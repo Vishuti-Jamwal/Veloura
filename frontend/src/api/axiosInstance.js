@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const API = axios.create({
-    baseURL: 'http://localhost:5000/api', // Update this if deploying
+    baseURL: 'https://veloura-lpqn.onrender.com/api', // Update this if deploying
 });
 
 // Add a request interceptor to attach the token
