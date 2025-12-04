@@ -16,9 +16,10 @@ const AdminDashboardPage = () => {
         try {
             // Fetching all products for simplicity, or could paginate
             const { data } = await API.get('/products?limit=100');
-            setProducts(data.products);
+            setProducts(data.products || []);
         } catch (error) {
             console.error(error);
+            setProducts([]); // Ensure it's an array on error
         }
     };
 
@@ -60,7 +61,7 @@ const AdminDashboardPage = () => {
             category: product.category,
             imageUrl: product.imageUrl,
         });
-        setEditingId(product._id || product.id); // Handle both _id and id if necessary
+        setEditingId(product.id); // Use correct ID field
         window.scrollTo(0, 0);
     };
 
@@ -166,7 +167,7 @@ const AdminDashboardPage = () => {
                     </thead>
                     <tbody>
                         {products.map((product) => (
-                            <tr key={product._id}>
+                            <tr key={product.id}>
                                 <td>
                                     <div className="admin-product-cell">
                                         <img className="admin-product-img" src={product.imageUrl} alt="" />
@@ -183,7 +184,7 @@ const AdminDashboardPage = () => {
                                         Edit
                                     </button>
                                     <button
-                                        onClick={() => handleDelete(product._id)}
+                                        onClick={() => handleDelete(product.id)}
                                         className="btn-link btn-danger"
                                     >
                                         Delete
